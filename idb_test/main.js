@@ -1,4 +1,4 @@
-(function() {
+var idbApp = (function() {
   'use strict';
 
   //check for support
@@ -14,6 +14,32 @@
   }
 });
 
+
+  function getQuestions() {
+    var s = '';
+    dbPromise.then(function(db) {
+      var tx = db.transaction('questions', 'readonly');
+      var store = tx.objectStore('questions');
+      return store.openCursor();
+    }).then(function showRange(cursor) {
+      if (!cursor) {return;}
+      console.log('Cursored at:', cursor.value.name);
+
+      s += '<h2>' + cursor.value.id + '</h2><p>';
+      for (var field in cursor.value) {
+        s += field + '=' + cursor.value[field] + '<br/>';
+      }
+      s += '</p>';
+
+      return cursor.continue().then(showRange);
+    }).then(function() {
+      if (s === '') {s = '<p>No results.</p>';}
+      document.getElementById('questions').innerHTML = s;
+    });
+
+  }
+
+function addQuestions(){
 dbPromise.then(function(db) {
 var tx = db.transaction('questions', 'readwrite');
 var store = tx.objectStore('questions');
@@ -46,4 +72,11 @@ return Promise.all(items.map(function(item) {
   console.log('All items added successfully!');
 });
 })
+}
+
+return {
+    dbPromise: (dbPromise),
+     getQuestions: (getQuestions),
+     addQuestions: (addQuestions),
+}
 })();
